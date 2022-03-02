@@ -73,6 +73,22 @@ runs:
             comment = comment.replace('cfy', '', 1).strip()
           print ('::set-output name=command::{0}'.format(comment))
           
+      - name: Get PR SHA
+        if: ${{ startsWith(steps.format_comment.outputs.command, 'terraform') }}
+        id: sha
+        uses: actions/github-script@v4
+        with:
+          result-encoding: string
+          script: |
+            const { owner, repo, number } = context.issue;
+            const pr = await github.pulls.get({
+              owner,
+              repo,
+              pull_number: number,
+            });
+            console.log(pr.data.head);
+            return pr.data.head.sha
+          
       - id: execute_command
         if: ${{ !startsWith(steps.format_comment.outputs.command, 'terraform') }}
         name: Execute cloudify command from comment
