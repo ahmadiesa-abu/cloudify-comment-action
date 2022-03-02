@@ -78,7 +78,7 @@ runs:
           command: ${{steps.format_comment.outputs.command}}
 
       - id: format_command
-        if: ${{ github.event.issue.pull_request && !startsWith(steps.format_comment.outputs.command, 'terraform') }}
+        if: ${{ !startsWith(steps.format_comment.outputs.command, 'terraform') }}
         name: format command output
         shell: python
         run: |
@@ -88,8 +88,9 @@ runs:
           cli_output = cli_output.replace('\n','%0A')
           cli_output = cli_output.replace('\r','%0D')
           print ('::set-output name=result::{0}'.format(cli_output))
+       
       - name: add comment
-        if: ${{ github.event.issue.pull_request && !startsWith(steps.format_comment.outputs.command, 'terraform') }}
+        if: ${{ !startsWith(steps.format_comment.outputs.command, 'terraform') }}
         uses: actions/github-script@v3
         env:
           COMMENT: "${{ steps.format_command.outputs.result }}"
