@@ -1,0 +1,112 @@
+name: Parse Cloudify Related comment
+description:  parse issue comment then take action to Cloudify.
+branding:
+  icon: cloud
+  color: white
+inputs:
+  comment:
+    description: comment to parse and take action based on
+    required: true
+  deployment_id:
+    description: ID of Cloudify environment
+    required: false
+    default: "-" 
+  environment-name:
+    description: Name of Cloudify environment
+    required: false
+    default: "-"
+  module-file:
+    description: URL/path to Terraform module archive
+    required: false
+    default: "-"
+  module-source-path:
+    description: path to Terraform module inside the archive
+    required: false
+    default: "-"
+  variables-file:
+    description: YAML/JSON file containing template variables
+    required: false
+    default: "-"
+  environment-file:
+    description: |
+      YAML/JSON file containing environment variables to pass to the Terraform process
+    required: false
+    default: "-"
+  environment-mapping:
+    description: |
+        A whitespace-delimited list of strings. For each item:
+
+        * If it is of the form `k=v`, then the value of the environment variable `k` is passed
+          as environment variable `v` to Terraform
+        * Otherwise, let the value be `x`; then the environment variable `x` is passed as-is
+          to Terraform
+
+        This effectively passes environment variables, visible to the CI/CD platform,
+        as environment variables to Terraform. Useful, among others, for
+        passing Cloud credentials - stored in the CI/CD platform - to Terraform
+    required: false
+    default: "-"
+  labels:
+    description: |
+      A labels list of the form <key>:<value>,<key>:<value>. 
+      Any comma and colon in <value> must be escaped with \. 
+      The labels’ keys are saved in lowercase.
+    required: false
+    default: "-"
+outputs:
+  result:
+    description: comment handling result
+    value: ${{ steps.format_command.outputs.result }}
+runs:
+  using: "composite"
+  steps:
+      - id: format_comment
+        name: Check if comment starts with cfy and remove it
+        shell: python
+        run: |
+          comment = "${{ inputs.comment }}"
+          comment = comment.strip()
+          if comment.startswith('cfy'):
+            comment = comment.replace('cfy', '', 1).strip()
+          print ('::set-output name=command::{0}'.format(comment))
+          
+      - id: execute_command
+        if: ${{ !startsWith(steps.format_comment.outputs.command, 'terraform') }}
+        name: Execute cloudify command from comment
+        uses: ahmadiesa-abu/cli-action@v1.0.1
+        with:
+          command: ${{steps.format_comment.outputs.command}}
+
+      - id: format_command
+        if: ${{ github.event.issue.pull_request && !startsWith(steps.format_comment.outputs.command, 'terraform') }}
+        name: format command output
+        shell: python
+        run: |
+          cli_output = ${{steps.execute_command.outputs.cli-output}}
+          cli_output = cli_output.decode()
+          cli_output = cli_output.replace('%','%25')
+          cli_output = cli_output.replace('\n','%0A')
+          cli_output = cli_output.replace('\r','%0D')
+          print ('::set-output name=result::{0}'.format(cli_output))
+      - name: add comment
+        if: ${{ github.event.issue.pull_request && !startsWith(steps.format_comment.outputs.command, 'terraform') }}
+        uses: actions/github-script@v3
+        env:
+          COMMENT: "${{ steps.format_command.outputs.result }}"
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const output = `#### Command Result
+            <details><summary>Show Result</summary>
+            \`\`\`\n
+            ${process.env.COMMENT}
+            \`\`\`
+            </details>`;
+            github.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            })
+
+ 
