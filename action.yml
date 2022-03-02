@@ -7,6 +7,9 @@ inputs:
   comment:
     description: comment to parse and take action based on
     required: true
+  github_token:
+    description: github token that will be used to add comment to PR
+    required: true
   deployment_id:
     description: ID of Cloudify environment
     required: false
@@ -95,7 +98,7 @@ runs:
         env:
           COMMENT: "${{ steps.format_command.outputs.result }}"
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ inputs.github_token }}
           script: |
             const output = `#### Command Result
             <details><summary>Show Result</summary>
