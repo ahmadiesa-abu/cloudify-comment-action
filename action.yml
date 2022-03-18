@@ -123,7 +123,7 @@ runs:
       - id: terraform_plan
         if: ${{ steps.format_comment.outputs.command == 'terraform plan' }}
         name: Execute terraform plan
-        uses: ahmadiesa-abu/terraform-plan-action@v1.0
+        uses: cloudify-cosmo/terraform-plan-action@v1.2
         with:
           environment-name: ${{ inputs.environment-name }}
           environment-id: ${{ inputs.environment-id }}
@@ -161,7 +161,7 @@ runs:
       - id: terraform_apply
         if: ${{ steps.format_comment.outputs.command == 'terraform apply' }}
         name: Execute terraform apply
-        uses: ahmadiesa-abu/terraform-apply-action@v1.0
+        uses: cloudify-cosmo/terraform-apply-action@v1.2
         with:
           environment-name: ${{ inputs.environment-name }}
           environment-id: ${{ inputs.environment-id }}
@@ -199,7 +199,7 @@ runs:
       - id: terraform_destroy
         if: ${{ steps.format_comment.outputs.command == 'terraform destroy' }}
         name: Execute terraform destroy
-        uses: ahmadiesa-abu/terraform-destroy-action@v1.0
+        uses: cloudify-cosmo/terraform-destroy-action@v1.2
         with:
           environment-name: ${{ inputs.environment-name }}
           environment-id: ${{ inputs.environment-id }}
