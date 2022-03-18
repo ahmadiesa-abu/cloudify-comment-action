@@ -59,7 +59,7 @@ inputs:
 outputs:
   result:
     description: comment handling result
-    value: ${{ steps.format_command.outputs.result }}
+    value: ${{ steps.terraform_apply.outputs.terraform-outputs || steps.terraform_plan.outputs.terraform-plan || steps.format_command.outputs.result }}
 runs:
   using: "composite"
   steps:
