@@ -1,5 +1,5 @@
-name: Parse Cloudify Related comment
-description:  parse issue comment then take action to Cloudify.
+name: Parse Cloudify Related comments
+description:  parse issue comment then pass action to Cloudify.
 branding:
   icon: cloud
   color: white
@@ -9,7 +9,8 @@ inputs:
     required: true
   github_token:
     description: github token that will be used to add comment to PR
-    required: true
+    default: "-"
+    required: false
   environment-name:
     description: Name of Cloudify environment
     required: false
@@ -17,11 +18,11 @@ inputs:
   environment-id:
     description: ID of Cloudify environment
     required: false
-    default: "-" 
+    default: "-"
   labels:
     description: |
-      A labels list of the form <key>:<value>,<key>:<value>. 
-      Any comma and colon in <value> must be escaped with \. 
+      A labels list of the form <key>:<value>,<key>:<value>.
+      Any comma and colon in <value> must be escaped with \.
       The labels’ keys are saved in lowercase.
     required: false
     default: "-"
@@ -63,8 +64,8 @@ outputs:
 runs:
   using: "composite"
   steps:
-      - id: format_comment
-        name: Check if comment starts with cfy and remove it
+      - name: Check if comment starts with cfy and remove it
+        id: format_comment
         shell: python
         run: |
           comment = "${{ inputs.comment }}"
@@ -72,10 +73,11 @@ runs:
           if comment.startswith('cfy'):
             comment = comment.replace('cfy', '', 1).strip()
           print ('::set-output name=command::{0}'.format(comment))
+
       # handle terraform logic
       - name: Get PR SHA
-        if: ${{ startsWith(steps.format_comment.outputs.command, 'terraform') }}
         id: sha
+        if: ${{ startsWith(steps.format_comment.outputs.command, 'terraform') }}
         uses: actions/github-script@v4
         with:
           result-encoding: string
@@ -87,16 +89,16 @@ runs:
               pull_number: number,
             });
             return pr.data.head.sha
-            
+
       - name: Checkout code
         if: ${{ startsWith(steps.format_comment.outputs.command, 'terraform') }}
         uses: actions/checkout@v2
         with:
           ref: ${{ steps.sha.outputs.result }}
-          
+
       - name: Get PR Repo Link
-        if: ${{ inputs.module-file == '-' && startsWith(steps.format_comment.outputs.command, 'terraform')  }}
         id: get_repo_link
+        if: ${{ inputs.module-file == '-' && startsWith(steps.format_comment.outputs.command, 'terraform')  }}
         uses: actions/github-script@v4
         with:
           result-encoding: string
@@ -119,10 +121,10 @@ runs:
             print ('::set-output name=module-file::{0}'.format(module_file))
           else:
             print ('::set-output name=module-file::{0}'.format(repo_link))
-      
-      - id: terraform_plan
+
+      - name: Execute terraform plan
+        id: terraform_plan
         if: ${{ steps.format_comment.outputs.command == 'terraform plan' }}
-        name: Execute terraform plan
         uses: cloudify-cosmo/terraform-plan-action@v1.2
         with:
           environment-name: ${{ inputs.environment-name }}
@@ -133,9 +135,9 @@ runs:
           variables-file: ${{ inputs.variables-file }}
           environment-file: ${{ inputs.environment-file }}
           environment-mapping: ${{ inputs.environment-mapping }}
-          
+
       - name: add-plan-comment
-        if: ${{ steps.format_comment.outputs.command == 'terraform plan' }}
+        if: ${{ inputs.github_token != '-' && steps.format_comment.outputs.command == 'terraform plan' }}
         uses: actions/github-script@v3
         env:
           PLAN: "terraform\n${{ steps.terraform_plan.outputs.terraform-plan }}"
@@ -143,13 +145,13 @@ runs:
           github-token: ${{ inputs.github_token }}
           script: |
             const output = `#### Terraform Plan
-            
+
             <details><summary>Show Plan</summary>
-            
+
             \`\`\`\n
             ${process.env.PLAN}
             \`\`\`
-            
+
             </details>`;
             github.issues.createComment({
               issue_number: context.issue.number,
@@ -157,10 +159,10 @@ runs:
               repo: context.repo.repo,
               body: output
             })
-  
-      - id: terraform_apply
+
+      - name: Execute terraform apply
+        id: terraform_apply
         if: ${{ steps.format_comment.outputs.command == 'terraform apply' }}
-        name: Execute terraform apply
         uses: cloudify-cosmo/terraform-apply-action@v1.2
         with:
           environment-name: ${{ inputs.environment-name }}
@@ -171,9 +173,9 @@ runs:
           variables-file: ${{ inputs.variables-file }}
           environment-file: ${{ inputs.environment-file }}
           environment-mapping: ${{ inputs.environment-mapping }}
-          
+
       - name: add-apply-comment
-        if: ${{ steps.format_comment.outputs.command == 'terraform apply' }}
+        if: ${{ inputs.github_token != '-' && steps.format_comment.outputs.command == 'terraform apply' }}
         uses: actions/github-script@v3
         env:
           MODULES: "terraform\n${{ steps.terraform_apply.outputs.terraform-outputs }}"
@@ -181,13 +183,13 @@ runs:
           github-token: ${{ inputs.github_token }}
           script: |
             const output = `#### Terraform Modules
-            
+
             <details><summary>Show Modules</summary>
-            
+
             \`\`\`\n
             ${process.env.MODULES}
             \`\`\`
-            
+
             </details>`;
             github.issues.createComment({
               issue_number: context.issue.number,
@@ -195,26 +197,26 @@ runs:
               repo: context.repo.repo,
               body: output
             })
-  
-      - id: terraform_destroy
+
+      - name: Execute terraform destroy
+        id: terraform_destroy
         if: ${{ steps.format_comment.outputs.command == 'terraform destroy' }}
-        name: Execute terraform destroy
         uses: cloudify-cosmo/terraform-destroy-action@v1.2
         with:
           environment-name: ${{ inputs.environment-name }}
           environment-id: ${{ inputs.environment-id }}
           labels: ${{ inputs.labels }}
-  
-      - id: execute_command
+
+      - name: Execute cloudify command from comment
+        id: execute_command
         if: ${{ !startsWith(steps.format_comment.outputs.command, 'terraform') }}
-        name: Execute cloudify command from comment
         uses: cloudify-cosmo/cli-action@v1.2
         with:
           command: ${{steps.format_comment.outputs.command}}
 
-      - id: format_command
+      - name: Format command output
+        id: format_command
         if: ${{ !startsWith(steps.format_comment.outputs.command, 'terraform') }}
-        name: format command output
         shell: python
         run: |
           cli_output = ${{steps.execute_command.outputs.cli-output}}
@@ -223,9 +225,9 @@ runs:
           cli_output = cli_output.replace('\n','%0A')
           cli_output = cli_output.replace('\r','%0D')
           print ('::set-output name=result::{0}'.format(cli_output))
-       
-      - name: add comment
-        if: ${{ !startsWith(steps.format_comment.outputs.command, 'terraform') }}
+
+      - name: Add comment
+        if: ${{ inputs.github_token != '-' && !startsWith(steps.format_comment.outputs.command, 'terraform') }}
         uses: actions/github-script@v3
         env:
           COMMENT: "${{ steps.format_command.outputs.result }}"
@@ -233,15 +235,15 @@ runs:
           github-token: ${{ inputs.github_token }}
           script: |
             const output = `#### Command Result
-            
+
             <details><summary>Show Result</summary>
-            
+
             \`\`\`\n
             ${process.env.COMMENT}
             \`\`\`
-            
+
             </details>`;
-            
+
             github.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
