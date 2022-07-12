@@ -232,6 +232,40 @@ runs:
               body: output
             })
 
+      - name: Execute terraform tfsec
+        id: terraform_sec
+        if: ${{ steps.format_comment.outputs.command == 'terraform sec' }}
+        uses: ahmadiesa-abu/terraform-sec-action@master
+        with:
+          environment-name: ${{ inputs.environment-name }}
+          environment-id: ${{ inputs.environment-id }}
+          labels: ${{ inputs.labels }}
+          tfsec-config: "{}"
+          
+      - name: Add tf-lint comment
+        if: ${{ inputs.github_token != '-' && steps.format_comment.outputs.command == 'terraform sec' }}
+        uses: actions/github-script@v3
+        env:
+          SEC: "terraform\n${{ steps.terraform_lint.outputs.terraform-sec }}"
+        with:
+          github-token: ${{ inputs.github_token }}
+          script: |
+            const output = `#### Terraform sec
+
+            <details><summary>Show Sec</summary>
+
+            \`\`\`\n
+            ${process.env.SEC}
+            \`\`\`
+
+            </details>`;
+            github.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            })
+
       - name: Execute terraform apply
         id: terraform_apply
         if: ${{ steps.format_comment.outputs.command == 'terraform apply' }}
