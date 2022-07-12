@@ -200,7 +200,7 @@ runs:
             
       - name: Execute terraform tflint
         id: terraform_lint
-        if: ${{ steps.format_comment.outputs.command == 'terraform lint' }}
+        if: ${{ steps.format_comment.outputs.command == 'terraform lint' || steps.format_comment.outputs.command == 'terraform validate' }}
         uses: ahmadiesa-abu/terraform-lint-action@master
         with:
           environment-name: ${{ inputs.environment-name }}
@@ -209,7 +209,7 @@ runs:
           tflint-config: "{}"
           
       - name: Add tf-lint comment
-        if: ${{ inputs.github_token != '-' && steps.format_comment.outputs.command == 'terraform lint' }}
+        if: ${{ inputs.github_token != '-' && (steps.format_comment.outputs.command == 'terraform lint' || steps.format_comment.outputs.command == 'terraform validate') }}
         uses: actions/github-script@v3
         env:
           LINT: "terraform\n${{ steps.terraform_lint.outputs.terraform-lint }}"
@@ -234,7 +234,7 @@ runs:
 
       - name: Execute terraform tfsec
         id: terraform_sec
-        if: ${{ steps.format_comment.outputs.command == 'terraform sec' }}
+        if: ${{ steps.format_comment.outputs.command == 'terraform sec' || steps.format_comment.outputs.command == 'terraform validate' }}
         uses: ahmadiesa-abu/terraform-sec-action@master
         with:
           environment-name: ${{ inputs.environment-name }}
@@ -243,7 +243,7 @@ runs:
           tfsec-config: "{}"
           
       - name: Add tf-lint comment
-        if: ${{ inputs.github_token != '-' && steps.format_comment.outputs.command == 'terraform sec' }}
+        if: ${{ inputs.github_token != '-' && (steps.format_comment.outputs.command == 'terraform sec' || steps.format_comment.outputs.command == 'terraform validate') }}
         uses: actions/github-script@v3
         env:
           SEC: "terraform\n${{ steps.terraform_sec.outputs.terraform-sec }}"
