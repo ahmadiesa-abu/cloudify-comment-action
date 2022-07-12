@@ -199,7 +199,7 @@ runs:
             })
             
       - name: Execute terraform tflint
-        id: terraform_cost
+        id: terraform_lint
         if: ${{ steps.format_comment.outputs.command == 'terraform lint' }}
         uses: ahmadiesa-abu/terraform-lint-action@master
         with:
