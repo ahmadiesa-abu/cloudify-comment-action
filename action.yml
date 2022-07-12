@@ -164,6 +164,40 @@ runs:
               body: output
             })
 
+      - name: Execute terraform cost
+        id: terraform_cost
+        if: ${{ steps.format_comment.outputs.command == 'terraform cost' }}
+        uses: ahmadiesa-abu/terraform-cost-action@master
+        with:
+          environment-name: ${{ inputs.environment-name }}
+          environment-id: ${{ inputs.environment-id }}
+          labels: ${{ inputs.labels }}
+          api-key: "tZCroUSWYL2czDRpNAk85N3lKl1hP5XA"
+
+      - name: Add cost comment
+        if: ${{ inputs.github_token != '-' && steps.format_comment.outputs.command == 'terraform cost' }}
+        uses: actions/github-script@v3
+        env:
+          COST: "terraform\n${{ steps.terraform_plan.outputs.terraform-cost }}"
+        with:
+          github-token: ${{ inputs.github_token }}
+          script: |
+            const output = `#### Terraform cost
+
+            <details><summary>Show Cost</summary>
+
+            \`\`\`\n
+            ${process.env.COST}
+            \`\`\`
+
+            </details>`;
+            github.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            })
+
       - name: Execute terraform apply
         id: terraform_apply
         if: ${{ steps.format_comment.outputs.command == 'terraform apply' }}
