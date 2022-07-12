@@ -207,7 +207,31 @@ runs:
           environment-id: ${{ inputs.environment-id }}
           labels: ${{ inputs.labels }}
           tflint-config: "{}"
-         
+          
+      - name: Add tf-lint comment
+        if: ${{ inputs.github_token != '-' && steps.format_comment.outputs.command == 'terraform lint' }}
+        uses: actions/github-script@v3
+        env:
+          LINT: "terraform\n${{ steps.terraform_lint.outputs.terraform-lint }}"
+        with:
+          github-token: ${{ inputs.github_token }}
+          script: |
+            const output = `#### Terraform lint
+
+            <details><summary>Show Lint</summary>
+
+            \`\`\`\n
+            ${process.env.LINT}
+            \`\`\`
+
+            </details>`;
+            github.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            })
+
       - name: Execute terraform apply
         id: terraform_apply
         if: ${{ steps.format_comment.outputs.command == 'terraform apply' }}
