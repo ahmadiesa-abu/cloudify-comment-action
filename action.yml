@@ -57,9 +57,13 @@ inputs:
         passing Cloud credentials - stored in the CI/CD platform - to Terraform
     required: false
     default: "-"
+  skip-apply-comment:
+    description: boolean to control whether to add terraform apply comment to PR
+    default: "false"
+    required: false
 outputs:
   result:
-    description: comment handling result
+    description: Comment handling result
     value: ${{ steps.terraform_apply.outputs.terraform-outputs || steps.terraform_plan.outputs.terraform-plan || steps.format_command.outputs.result }}
 runs:
   using: "composite"
@@ -136,7 +140,7 @@ runs:
           environment-file: ${{ inputs.environment-file }}
           environment-mapping: ${{ inputs.environment-mapping }}
 
-      - name: add-plan-comment
+      - name: Add plan comment
         if: ${{ inputs.github_token != '-' && steps.format_comment.outputs.command == 'terraform plan' }}
         uses: actions/github-script@v3
         env:
@@ -174,8 +178,8 @@ runs:
           environment-file: ${{ inputs.environment-file }}
           environment-mapping: ${{ inputs.environment-mapping }}
 
-      - name: add-apply-comment
-        if: ${{ inputs.github_token != '-' && steps.format_comment.outputs.command == 'terraform apply' }}
+      - name: Add apply comment
+        if: ${{ inputs.github_token != '-' && inputs.skip-apply-comment == 'false' && steps.format_comment.outputs.command == 'terraform apply' }}
         uses: actions/github-script@v3
         env:
           MODULES: "terraform\n${{ steps.terraform_apply.outputs.terraform-outputs }}"
