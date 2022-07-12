@@ -166,7 +166,7 @@ runs:
 
       - name: Execute terraform cost
         id: terraform_cost
-        if: ${{ steps.format_comment.outputs.command == 'terraform cost' }}
+        if: ${{ steps.format_comment.outputs.command == 'terraform cost' || steps.format_comment.outputs.command == 'terraform plan' }}
         uses: ahmadiesa-abu/terraform-cost-action@master
         with:
           environment-name: ${{ inputs.environment-name }}
@@ -175,7 +175,7 @@ runs:
           api-key: "tZCroUSWYL2czDRpNAk85N3lKl1hP5XA"
 
       - name: Add cost comment
-        if: ${{ inputs.github_token != '-' && steps.format_comment.outputs.command == 'terraform cost' }}
+        if: ${{ inputs.github_token != '-' && (steps.format_comment.outputs.command == 'terraform cost' || steps.format_comment.outputs.command == 'terraform plan') }}
         uses: actions/github-script@v3
         env:
           COST: "terraform\n${{ steps.terraform_cost.outputs.terraform-cost }}"
