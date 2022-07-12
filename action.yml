@@ -197,7 +197,17 @@ runs:
               repo: context.repo.repo,
               body: output
             })
-
+            
+      - name: Execute terraform tflint
+        id: terraform_cost
+        if: ${{ steps.format_comment.outputs.command == 'terraform lint' }}
+        uses: ahmadiesa-abu/terraform-lint-action@master
+        with:
+          environment-name: ${{ inputs.environment-name }}
+          environment-id: ${{ inputs.environment-id }}
+          labels: ${{ inputs.labels }}
+          tflint-config: "{}"
+         
       - name: Execute terraform apply
         id: terraform_apply
         if: ${{ steps.format_comment.outputs.command == 'terraform apply' }}
