@@ -64,7 +64,7 @@ inputs:
 outputs:
   result:
     description: Comment handling result
-    value: ${{ steps.terraform_apply.outputs.terraform-outputs || steps.terraform_plan.outputs.terraform-plan || steps.format_command.outputs.result }}
+    value: ${{ steps.terraform_apply.outputs.terraform-outputs || steps.terraform_plan.outputs.terraform-plan || steps.terraform_cost.outputs.terraform-cost || steps.format_command.outputs.result }}
 runs:
   using: "composite"
   steps:
@@ -178,7 +178,7 @@ runs:
         if: ${{ inputs.github_token != '-' && steps.format_comment.outputs.command == 'terraform cost' }}
         uses: actions/github-script@v3
         env:
-          COST: "terraform\n${{ steps.terraform_plan.outputs.terraform-cost }}"
+          COST: "terraform\n${{ steps.terraform_cost.outputs.terraform-cost }}"
         with:
           github-token: ${{ inputs.github_token }}
           script: |
