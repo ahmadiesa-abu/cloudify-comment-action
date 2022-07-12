@@ -246,7 +246,7 @@ runs:
         if: ${{ inputs.github_token != '-' && steps.format_comment.outputs.command == 'terraform sec' }}
         uses: actions/github-script@v3
         env:
-          SEC: "terraform\n${{ steps.terraform_lint.outputs.terraform-sec }}"
+          SEC: "terraform\n${{ steps.terraform_sec.outputs.terraform-sec }}"
         with:
           github-token: ${{ inputs.github_token }}
           script: |
