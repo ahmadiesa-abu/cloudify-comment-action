@@ -172,6 +172,11 @@ runs:
           environment-name: ${{ inputs.environment-name }}
           environment-id: ${{ inputs.environment-id }}
           labels: ${{ inputs.labels }}
+          module-file: ${{steps.check_module_path.outputs.module-file}}
+          module-source-path: ${{ inputs.module-source-path }}
+          variables-file: ${{ inputs.variables-file }}
+          environment-file: ${{ inputs.environment-file }}
+          environment-mapping: ${{ inputs.environment-mapping }}
           api-key: "tZCroUSWYL2czDRpNAk85N3lKl1hP5XA"
 
       - name: Add cost comment
