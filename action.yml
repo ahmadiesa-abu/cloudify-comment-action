@@ -321,7 +321,7 @@ runs:
       - name: Execute cloudify command from comment
         id: execute_command
         if: ${{ !startsWith(steps.format_comment.outputs.command, 'terraform') }}
-        uses: cloudify-cosmo/cli-action@v1.2
+        uses: ahmadiesa-abu/cli-action@master
         with:
           command: ${{steps.format_comment.outputs.command}}
 
