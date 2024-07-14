@@ -115,208 +115,208 @@ runs:
             });
             return pr.data.head.repo.html_url+'/archive/refs/heads/'+pr.data.head.ref+'.zip';
 
-      - name: Set Module Path
-        id: check_module_path
-        shell: python
-        run: |
-          module_file = "${{ inputs.module-file }}"
-          repo_link = "${{steps.get_repo_link.outputs.result}}"
-          if module_file != '-':
-            print ('::set-output name=module-file::{0}'.format(module_file))
-          else:
-            print ('::set-output name=module-file::{0}'.format(repo_link))
+      # - name: Set Module Path
+      #   id: check_module_path
+      #   shell: python
+      #   run: |
+      #     module_file = "${{ inputs.module-file }}"
+      #     repo_link = "${{steps.get_repo_link.outputs.result}}"
+      #     if module_file != '-':
+      #       print ('::set-output name=module-file::{0}'.format(module_file))
+      #     else:
+      #       print ('::set-output name=module-file::{0}'.format(repo_link))
 
-      - name: Execute terraform plan
-        id: terraform_plan
-        if: ${{ steps.format_comment.outputs.command == 'terraform plan' }}
-        uses: cloudify-cosmo/terraform-plan-action@v1.2
-        with:
-          environment-name: ${{ inputs.environment-name }}
-          environment-id: ${{ inputs.environment-id }}
-          labels: ${{ inputs.labels }}
-          module-file: ${{steps.check_module_path.outputs.module-file}}
-          module-source-path: ${{ inputs.module-source-path }}
-          variables-file: ${{ inputs.variables-file }}
-          environment-file: ${{ inputs.environment-file }}
-          environment-mapping: ${{ inputs.environment-mapping }}
+      # - name: Execute terraform plan
+      #   id: terraform_plan
+      #   if: ${{ steps.format_comment.outputs.command == 'terraform plan' }}
+      #   uses: cloudify-cosmo/terraform-plan-action@v1.2
+      #   with:
+      #     environment-name: ${{ inputs.environment-name }}
+      #     environment-id: ${{ inputs.environment-id }}
+      #     labels: ${{ inputs.labels }}
+      #     module-file: ${{steps.check_module_path.outputs.module-file}}
+      #     module-source-path: ${{ inputs.module-source-path }}
+      #     variables-file: ${{ inputs.variables-file }}
+      #     environment-file: ${{ inputs.environment-file }}
+      #     environment-mapping: ${{ inputs.environment-mapping }}
 
-      - name: Add plan comment
-        if: ${{ inputs.github_token != '-' && steps.format_comment.outputs.command == 'terraform plan' }}
-        uses: actions/github-script@v3
-        env:
-          PLAN: "terraform\n${{ steps.terraform_plan.outputs.terraform-plan }}"
-        with:
-          github-token: ${{ inputs.github_token }}
-          script: |
-            const output = `#### Terraform Plan
+      # - name: Add plan comment
+      #   if: ${{ inputs.github_token != '-' && steps.format_comment.outputs.command == 'terraform plan' }}
+      #   uses: actions/github-script@v3
+      #   env:
+      #     PLAN: "terraform\n${{ steps.terraform_plan.outputs.terraform-plan }}"
+      #   with:
+      #     github-token: ${{ inputs.github_token }}
+      #     script: |
+      #       const output = `#### Terraform Plan
 
-            <details><summary>Show Plan</summary>
+      #       <details><summary>Show Plan</summary>
 
-            \`\`\`\n
-            ${process.env.PLAN}
-            \`\`\`
+      #       \`\`\`\n
+      #       ${process.env.PLAN}
+      #       \`\`\`
 
-            </details>`;
-            github.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: output
-            })
+      #       </details>`;
+      #       github.issues.createComment({
+      #         issue_number: context.issue.number,
+      #         owner: context.repo.owner,
+      #         repo: context.repo.repo,
+      #         body: output
+      #       })
 
-      - name: Execute terraform cost
-        id: terraform_cost
-        if: ${{ steps.format_comment.outputs.command == 'terraform cost' || steps.format_comment.outputs.command == 'terraform plan' }}
-        uses: ahmadiesa-abu/terraform-cost-action@master
-        with:
-          environment-name: ${{ inputs.environment-name }}
-          environment-id: ${{ inputs.environment-id }}
-          labels: ${{ inputs.labels }}
-          module-file: ${{steps.check_module_path.outputs.module-file}}
-          module-source-path: ${{ inputs.module-source-path }}
-          variables-file: ${{ inputs.variables-file }}
-          environment-file: ${{ inputs.environment-file }}
-          environment-mapping: ${{ inputs.environment-mapping }}
-          api-key: "tZCroUSWYL2czDRpNAk85N3lKl1hP5XA"
+      # - name: Execute terraform cost
+      #   id: terraform_cost
+      #   if: ${{ steps.format_comment.outputs.command == 'terraform cost' || steps.format_comment.outputs.command == 'terraform plan' }}
+      #   uses: ahmadiesa-abu/terraform-cost-action@master
+      #   with:
+      #     environment-name: ${{ inputs.environment-name }}
+      #     environment-id: ${{ inputs.environment-id }}
+      #     labels: ${{ inputs.labels }}
+      #     module-file: ${{steps.check_module_path.outputs.module-file}}
+      #     module-source-path: ${{ inputs.module-source-path }}
+      #     variables-file: ${{ inputs.variables-file }}
+      #     environment-file: ${{ inputs.environment-file }}
+      #     environment-mapping: ${{ inputs.environment-mapping }}
+      #     api-key: "tZCroUSWYL2czDRpNAk85N3lKl1hP5XA"
 
-      - name: Add cost comment
-        if: ${{ inputs.github_token != '-' && (steps.format_comment.outputs.command == 'terraform cost' || steps.format_comment.outputs.command == 'terraform plan') }}
-        uses: actions/github-script@v3
-        env:
-          COST: "terraform\n${{ steps.terraform_cost.outputs.terraform-cost }}"
-        with:
-          github-token: ${{ inputs.github_token }}
-          script: |
-            const output = `#### Terraform cost
+      # - name: Add cost comment
+      #   if: ${{ inputs.github_token != '-' && (steps.format_comment.outputs.command == 'terraform cost' || steps.format_comment.outputs.command == 'terraform plan') }}
+      #   uses: actions/github-script@v3
+      #   env:
+      #     COST: "terraform\n${{ steps.terraform_cost.outputs.terraform-cost }}"
+      #   with:
+      #     github-token: ${{ inputs.github_token }}
+      #     script: |
+      #       const output = `#### Terraform cost
 
-            <details><summary>Show Cost</summary>
+      #       <details><summary>Show Cost</summary>
 
-            \`\`\`\n
-            ${process.env.COST}
-            \`\`\`
+      #       \`\`\`\n
+      #       ${process.env.COST}
+      #       \`\`\`
 
-            </details>`;
-            github.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: output
-            })
+      #       </details>`;
+      #       github.issues.createComment({
+      #         issue_number: context.issue.number,
+      #         owner: context.repo.owner,
+      #         repo: context.repo.repo,
+      #         body: output
+      #       })
             
-      - name: Execute terraform tflint
-        id: terraform_lint
-        if: ${{ steps.format_comment.outputs.command == 'terraform lint' || steps.format_comment.outputs.command == 'terraform validate' }}
-        uses: ahmadiesa-abu/terraform-lint-action@master
-        with:
-          environment-name: ${{ inputs.environment-name }}
-          environment-id: ${{ inputs.environment-id }}
-          labels: ${{ inputs.labels }}
-          tflint-config: "{}"
+      # - name: Execute terraform tflint
+      #   id: terraform_lint
+      #   if: ${{ steps.format_comment.outputs.command == 'terraform lint' || steps.format_comment.outputs.command == 'terraform validate' }}
+      #   uses: ahmadiesa-abu/terraform-lint-action@master
+      #   with:
+      #     environment-name: ${{ inputs.environment-name }}
+      #     environment-id: ${{ inputs.environment-id }}
+      #     labels: ${{ inputs.labels }}
+      #     tflint-config: "{}"
           
-      - name: Add tf-lint comment
-        if: ${{ inputs.github_token != '-' && (steps.format_comment.outputs.command == 'terraform lint' || steps.format_comment.outputs.command == 'terraform validate') }}
-        uses: actions/github-script@v3
-        env:
-          LINT: "terraform\n${{ steps.terraform_lint.outputs.terraform-lint }}"
-        with:
-          github-token: ${{ inputs.github_token }}
-          script: |
-            const output = `#### Terraform lint
+      # - name: Add tf-lint comment
+      #   if: ${{ inputs.github_token != '-' && (steps.format_comment.outputs.command == 'terraform lint' || steps.format_comment.outputs.command == 'terraform validate') }}
+      #   uses: actions/github-script@v3
+      #   env:
+      #     LINT: "terraform\n${{ steps.terraform_lint.outputs.terraform-lint }}"
+      #   with:
+      #     github-token: ${{ inputs.github_token }}
+      #     script: |
+      #       const output = `#### Terraform lint
 
-            <details><summary>Show Lint</summary>
+      #       <details><summary>Show Lint</summary>
 
-            \`\`\`\n
-            ${process.env.LINT}
-            \`\`\`
+      #       \`\`\`\n
+      #       ${process.env.LINT}
+      #       \`\`\`
 
-            </details>`;
-            github.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: output
-            })
+      #       </details>`;
+      #       github.issues.createComment({
+      #         issue_number: context.issue.number,
+      #         owner: context.repo.owner,
+      #         repo: context.repo.repo,
+      #         body: output
+      #       })
 
-      - name: Execute terraform tfsec
-        id: terraform_sec
-        if: ${{ steps.format_comment.outputs.command == 'terraform sec' || steps.format_comment.outputs.command == 'terraform validate' }}
-        uses: ahmadiesa-abu/terraform-sec-action@master
-        with:
-          environment-name: ${{ inputs.environment-name }}
-          environment-id: ${{ inputs.environment-id }}
-          labels: ${{ inputs.labels }}
-          tfsec-config: "{}"
+      # - name: Execute terraform tfsec
+      #   id: terraform_sec
+      #   if: ${{ steps.format_comment.outputs.command == 'terraform sec' || steps.format_comment.outputs.command == 'terraform validate' }}
+      #   uses: ahmadiesa-abu/terraform-sec-action@master
+      #   with:
+      #     environment-name: ${{ inputs.environment-name }}
+      #     environment-id: ${{ inputs.environment-id }}
+      #     labels: ${{ inputs.labels }}
+      #     tfsec-config: "{}"
           
-      - name: Add tf-lint comment
-        if: ${{ inputs.github_token != '-' && (steps.format_comment.outputs.command == 'terraform sec' || steps.format_comment.outputs.command == 'terraform validate') }}
-        uses: actions/github-script@v3
-        env:
-          SEC: "terraform\n${{ steps.terraform_sec.outputs.terraform-sec }}"
-        with:
-          github-token: ${{ inputs.github_token }}
-          script: |
-            const output = `#### Terraform sec
+      # - name: Add tf-lint comment
+      #   if: ${{ inputs.github_token != '-' && (steps.format_comment.outputs.command == 'terraform sec' || steps.format_comment.outputs.command == 'terraform validate') }}
+      #   uses: actions/github-script@v3
+      #   env:
+      #     SEC: "terraform\n${{ steps.terraform_sec.outputs.terraform-sec }}"
+      #   with:
+      #     github-token: ${{ inputs.github_token }}
+      #     script: |
+      #       const output = `#### Terraform sec
 
-            <details><summary>Show Sec</summary>
+      #       <details><summary>Show Sec</summary>
 
-            \`\`\`\n
-            ${process.env.SEC}
-            \`\`\`
+      #       \`\`\`\n
+      #       ${process.env.SEC}
+      #       \`\`\`
 
-            </details>`;
-            github.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: output
-            })
+      #       </details>`;
+      #       github.issues.createComment({
+      #         issue_number: context.issue.number,
+      #         owner: context.repo.owner,
+      #         repo: context.repo.repo,
+      #         body: output
+      #       })
 
-      - name: Execute terraform apply
-        id: terraform_apply
-        if: ${{ steps.format_comment.outputs.command == 'terraform apply' }}
-        uses: cloudify-cosmo/terraform-apply-action@v1.2
-        with:
-          environment-name: ${{ inputs.environment-name }}
-          environment-id: ${{ inputs.environment-id }}
-          labels: ${{ inputs.labels }}
-          module-file: ${{steps.check_module_path.outputs.module-file}}
-          module-source-path: ${{ inputs.module-source-path }}
-          variables-file: ${{ inputs.variables-file }}
-          environment-file: ${{ inputs.environment-file }}
-          environment-mapping: ${{ inputs.environment-mapping }}
+      # - name: Execute terraform apply
+      #   id: terraform_apply
+      #   if: ${{ steps.format_comment.outputs.command == 'terraform apply' }}
+      #   uses: cloudify-cosmo/terraform-apply-action@v1.2
+      #   with:
+      #     environment-name: ${{ inputs.environment-name }}
+      #     environment-id: ${{ inputs.environment-id }}
+      #     labels: ${{ inputs.labels }}
+      #     module-file: ${{steps.check_module_path.outputs.module-file}}
+      #     module-source-path: ${{ inputs.module-source-path }}
+      #     variables-file: ${{ inputs.variables-file }}
+      #     environment-file: ${{ inputs.environment-file }}
+      #     environment-mapping: ${{ inputs.environment-mapping }}
 
-      - name: Add apply comment
-        if: ${{ inputs.github_token != '-' && inputs.skip-apply-comment == 'false' && steps.format_comment.outputs.command == 'terraform apply' }}
-        uses: actions/github-script@v3
-        env:
-          MODULES: "terraform\n${{ steps.terraform_apply.outputs.terraform-outputs }}"
-        with:
-          github-token: ${{ inputs.github_token }}
-          script: |
-            const output = `#### Terraform Modules
+      # - name: Add apply comment
+      #   if: ${{ inputs.github_token != '-' && inputs.skip-apply-comment == 'false' && steps.format_comment.outputs.command == 'terraform apply' }}
+      #   uses: actions/github-script@v3
+      #   env:
+      #     MODULES: "terraform\n${{ steps.terraform_apply.outputs.terraform-outputs }}"
+      #   with:
+      #     github-token: ${{ inputs.github_token }}
+      #     script: |
+      #       const output = `#### Terraform Modules
 
-            <details><summary>Show Modules</summary>
+      #       <details><summary>Show Modules</summary>
 
-            \`\`\`\n
-            ${process.env.MODULES}
-            \`\`\`
+      #       \`\`\`\n
+      #       ${process.env.MODULES}
+      #       \`\`\`
 
-            </details>`;
-            github.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: output
-            })
+      #       </details>`;
+      #       github.issues.createComment({
+      #         issue_number: context.issue.number,
+      #         owner: context.repo.owner,
+      #         repo: context.repo.repo,
+      #         body: output
+      #       })
 
-      - name: Execute terraform destroy
-        id: terraform_destroy
-        if: ${{ steps.format_comment.outputs.command == 'terraform destroy' }}
-        uses: cloudify-cosmo/terraform-destroy-action@v1.2
-        with:
-          environment-name: ${{ inputs.environment-name }}
-          environment-id: ${{ inputs.environment-id }}
-          labels: ${{ inputs.labels }}
+      # - name: Execute terraform destroy
+      #   id: terraform_destroy
+      #   if: ${{ steps.format_comment.outputs.command == 'terraform destroy' }}
+      #   uses: cloudify-cosmo/terraform-destroy-action@v1.2
+      #   with:
+      #     environment-name: ${{ inputs.environment-name }}
+      #     environment-id: ${{ inputs.environment-id }}
+      #     labels: ${{ inputs.labels }}
 
       - name: Execute cloudify command from comment
         id: execute_command
